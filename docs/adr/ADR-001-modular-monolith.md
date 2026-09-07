@@ -18,13 +18,19 @@ be separate deployable services (microservices) or modules within one applicatio
 3. **Fully flat monolith** — one application, no enforced boundaries at all.
 
 ## Decision
-Modular monolith (option 2). Three things still run as separate processes because they
+Modular monolith (option 2). Two things still run as separate processes because they
 have a concrete reason to:
 - **MCP servers** (circular-server, policy-server) — credential isolation and a sandbox
   boundary; they should not share the main app's process/credentials.
 - **Worker / job runner** — long-running analysis (30-60s) needs to scale independently
   from the request-serving API.
-- **Vector DB (Qdrant)** — inherently a separate service.
+
+Vector DB: switched from Qdrant to **ChromaDB running embedded** (in-process,
+persisted to `data/chroma_db/`) — at our scale (tens to low hundreds of
+documents) an extra standalone vector DB service buys nothing. Extraction
+trigger: move to a standalone vector DB (Qdrant/Milvus) if the corpus grows
+into the tens of thousands of chunks or needs to be queried by more than one
+service.
 
 ## Why not microservices
 - One developer, one codebase — the distributed-systems tax (service discovery,
