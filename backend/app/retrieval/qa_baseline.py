@@ -36,14 +36,32 @@ def format_context(docs) -> str:
     return "\n\n".join(f"[{d.metadata['chunk_id']}] {d.page_content}" for d in docs)
 
 
+
+def _content_to_text(content) -> str:
+    """Gemini kabhi kabhi response.content ek plain string ki jagah list of
+    parts deta hai (multi-part / AFC response shape). Ise hamesha ek plain
+    string me normalize karte hain taaki downstream scoring (metrics.py) safe
+    rahe."""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        parts = []
+        for item in content:
+            if isinstance(item, str):
+                parts.append(item)
+            elif isinstance(item, dict):
+                parts.append(item.get("text", ""))
+        return "".join(parts)
+    return str(content)
+
 def answer(store, question: str, k: int = 5) -> dict:
     docs = retrieve(store, question, k=k)
-    llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0)
+    llm = ChatGoogleGenerativeAI(model="gemini-3.1-flash-lite", temperature=0)
     chain = PROMPT | llm
     response = chain.invoke({"context": format_context(docs), "question": question})
     return {
         "question": question,
-        "answer": response.content,
+        "answer": _content_to_text(response.content),
         "retrieved_chunk_ids": [d.metadata["chunk_id"] for d in docs],
     }
 

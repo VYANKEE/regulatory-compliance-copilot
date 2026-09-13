@@ -25,9 +25,23 @@ def build():
             meta = get_metadata(pdf_path.name)
             text = extract_text(str(pdf_path))
             chunks = chunk_by_paragraph(text)
+            seen_ids: dict[str, int] = {}
             for i, c in enumerate(chunks):
+                base_id = f"{meta['circular_ref']}::{c['para_no'] or i}"
+                # Same para_no kabhi kabhi ek document me dobara aata hai (jaise
+                # end me "repealed circulars" ki annex table, jisme numbering
+                # phir se 1, 2, 3... se shuru hoti hai) - asli clause wala
+                # PEHLA occurrence apna clean id rakhta hai, baad wale
+                # occurrences ko unique suffix milta hai taaki Chroma me
+                # DuplicateIDError na aaye.
+                if base_id in seen_ids:
+                    seen_ids[base_id] += 1
+                    chunk_id = f"{base_id}-dup{seen_ids[base_id]}"
+                else:
+                    seen_ids[base_id] = 0
+                    chunk_id = base_id
                 record = {
-                    "chunk_id": f"{meta['circular_ref']}::{c['para_no'] or i}",
+                    "chunk_id": chunk_id,
                     **meta,
                     "chapter": c["chapter"],
                     "para_no": c["para_no"],

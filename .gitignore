@@ -14,3 +14,29 @@ build/
 .coverage
 htmlcov/
 docker-compose.override.yml
+
+# Firebase service-account credentials -- never commit real secrets
+firebase-credentials.json
+*firebase-adminsdk*.json
+
+# local sqlite fallback DB
+data/app.db
+data/app.db-journal
+data/*.db-journal
+
+# stray/experimental vector-store dirs (safe to delete manually; kept out of
+# git either way so a stray one never gets committed by accident)
+data/chroma_db_broken_*/
+data/chroma_db_stale_*/
+data/chroma_db_unused_*/
+
+# scratch cleanup + accidental duplicate venv found during a pre-push audit
+# -- safe to delete by hand, kept out of git either way
+_to_delete/
+.venv-1/
+
+# Uploaded/generated demo data -- reproducible from generate_policy_pdf.py and
+# the ingestion pipeline, not source. 28+ duplicate test uploads accumulated
+# here; regenerate instead of committing.
+data/policies/*.pdf
+data/vector_store/

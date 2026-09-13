@@ -1,0 +1,40 @@
+# Local dev infra: Postgres + Redis. Backend itself runs natively (uvicorn)
+# during development for fast reload; the full backend service (Dockerfile)
+# gets added to this file in Phase 14 for actual deployment.
+#
+# Usage: docker compose up -d postgres redis
+# Then set in .env:
+#   DATABASE_URL=postgresql://compliance:compliance@localhost:5432/compliance_copilot
+#   REDIS_URL=redis://localhost:6379/0
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: compliance-postgres
+    environment:
+      POSTGRES_USER: compliance
+      POSTGRES_PASSWORD: compliance
+      POSTGRES_DB: compliance_copilot
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U compliance"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: compliance-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
